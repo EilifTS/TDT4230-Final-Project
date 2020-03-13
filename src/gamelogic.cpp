@@ -19,6 +19,7 @@
 #include <glm/gtx/transform.hpp>
 
 #include "utilities/imageLoader.hpp"
+#include "utilities/objLoader.h"
 #include "utilities/glfont.h"
 
 enum KeyFrameAction {
@@ -37,6 +38,7 @@ SceneNode* rootNode;
 SceneNode* boxNode;
 SceneNode* ballNode;
 SceneNode* padNode;
+SceneNode* treeNode;
 
 double ballRadius = 3.0f;
 
@@ -114,22 +116,26 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     // Create meshes
     Mesh pad = cube(padDimensions, glm::vec2(30, 40), true);
     Mesh box = cube(boxDimensions, glm::vec2(90), true, true);
+    Mesh tree = OBJLoader::LoadFromFile("../../../res/meshes/tree1.obj");
     Mesh sphere = generateSphere(1.0, 40, 40);
 
     // Fill buffers
     unsigned int ballVAO = generateBuffer(sphere);
     unsigned int boxVAO  = generateBuffer(box);
     unsigned int padVAO  = generateBuffer(pad);
+    unsigned int treeVAO  = generateBuffer(tree);
 
     // Construct scene
     rootNode = createSceneNode();
     boxNode  = createSceneNode();
     padNode  = createSceneNode();
     ballNode = createSceneNode();
+    treeNode = createSceneNode();
 
     rootNode->children.push_back(boxNode);
     rootNode->children.push_back(padNode);
     rootNode->children.push_back(ballNode);
+    rootNode->children.push_back(treeNode);
 
     boxNode->vertexArrayObjectID = boxVAO;
     boxNode->VAOIndexCount = box.indices.size();
@@ -140,7 +146,8 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     ballNode->vertexArrayObjectID = ballVAO;
     ballNode->VAOIndexCount = sphere.indices.size();
 
-
+    treeNode->vertexArrayObjectID = treeVAO;
+    treeNode->VAOIndexCount = tree.indices.size();
 
 
 
@@ -326,6 +333,9 @@ void updateFrame(GLFWwindow* window) {
     ballNode->position = ballPosition;
     ballNode->scale = glm::vec3(ballRadius);
     ballNode->rotation = { 0, totalElapsedTime*2, 0 };
+
+    treeNode->position = {0, -3, -25};
+    treeNode->scale = glm::vec3(1,1,1);
 
     padNode->position  = { 
         boxNode->position.x - (boxDimensions.x/2) + (padDimensions.x/2) + (1 - padPositionX) * (boxDimensions.x - padDimensions.x), 
