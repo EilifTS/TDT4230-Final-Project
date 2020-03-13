@@ -36,3 +36,7 @@
 !/build/.emptydirectory
 
 /.vscode/*
+
+/.vs/
+/lib/
+/out/
