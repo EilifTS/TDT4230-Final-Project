@@ -15,6 +15,7 @@
 #include <fmt/format.h>
 #include "gamelogic.h"
 #include "sceneGraph.hpp"
+#include "camera.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 
@@ -31,12 +32,13 @@ enum KeyFrameAction {
 unsigned int currentKeyFrame = 0;
 unsigned int previousKeyFrame = 0;
 
+Camera* camera;
+
 SceneNode* rootNode;
 SceneNode* groundNode;
 SceneNode* treeNode;
 
 // These are heap allocated, because they should not be initialised at the start of the program
-sf::SoundBuffer* buffer;
 Gloom::Shader* shader;
 sf::Sound* sound;
 
@@ -68,34 +70,21 @@ void mouseCallback(GLFWwindow* window, double x, double y) {
     double deltaX = x - lastMouseX;
     double deltaY = y - lastMouseY;
 
-    //padPositionX -= mouseSensitivity * deltaX / windowWidth;
-    //padPositionZ -= mouseSensitivity * deltaY / windowHeight;
-
-    //if (padPositionX > 1) padPositionX = 1;
-    //if (padPositionX < 0) padPositionX = 0;
-    //if (padPositionZ > 1) padPositionZ = 1;
-    //if (padPositionZ < 0) padPositionZ = 0;
+    camera->Move(glm::vec3(), deltaY * 0.01f, deltaX * 0.01f);
 
     glfwSetCursorPos(window, windowWidth / 2, windowHeight / 2);
 }
 
-//// A few lines to help you if you've never used c++ structs
-// struct LightSource {
-//     bool a_placeholder_value;
-// };
-// LightSource lightSources[/*Put number of light sources you want here*/];
-
 void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
-    /*buffer = new sf::SoundBuffer();
-    if (!buffer->loadFromFile("../../../res/Hall of the Mountain King.ogg")) {
-        return;
-    }*/
-
     options = gameOptions;
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     glfwSetCursorPosCallback(window, mouseCallback);
 
+    // Create camera
+    camera = new Camera(glm::vec3(0.0f,1.0f,20.0f), windowWidth, windowHeight);
+
+    // Create shaders
     shader = new Gloom::Shader();
     shader->makeBasicShader("../../../res/shaders/simple.vert", "../../../res/shaders/simple.frag");
     shader->activate();
@@ -122,14 +111,9 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     treeNode->vertexArrayObjectID = treeVAO;
     treeNode->VAOIndexCount = tree.indices.size();
 
-
-
-
     getTimeDeltaSeconds();
 
     std::cout << fmt::format("Initialized scene with {} SceneNodes.", totalChildren(rootNode)) << std::endl;
-
-    std::cout << "Ready. Click to start!" << std::endl;
 }
 
 void updateFrame(GLFWwindow* window) {
@@ -137,47 +121,37 @@ void updateFrame(GLFWwindow* window) {
 
     double timeDelta = getTimeDeltaSeconds();
 
-    
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1)) {
-        mouseLeftPressed = true;
-        mouseLeftReleased = false;
-    } else {
-        mouseLeftReleased = mouseLeftPressed;
-        mouseLeftPressed = false;
+    glm::vec3 movement = glm::vec3();
+    if (glfwGetKey(window, GLFW_KEY_A)) {
+        movement += glm::vec3(-1.0f, 0.0f, 0.0f);
+    } 
+    else if(glfwGetKey(window, GLFW_KEY_D)) {
+        movement += glm::vec3(1.0f, 0.0f, 0.0f);
     }
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2)) {
-        mouseRightPressed = true;
-        mouseRightReleased = false;
-    } else {
-        mouseRightReleased = mouseRightPressed;
-        mouseRightPressed = false;
+    else if (glfwGetKey(window, GLFW_KEY_W)) {
+        movement += glm::vec3(0.0f, 0.0f, -1.0f);
+    }
+    else if (glfwGetKey(window, GLFW_KEY_S)) {
+        movement += glm::vec3(0.0f, 0.0f, 1.0f);
+    }
+    else if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)) {
+        movement += glm::vec3(0.0f, -1.0f, 0.0f);
+    }
+    else if (glfwGetKey(window, GLFW_KEY_SPACE)) {
+        movement += glm::vec3(0.0f, 1.0f, 0.0f);
     }
     
-    glm::mat4 projection = glm::perspective(glm::radians(80.0f), float(windowWidth) / float(windowHeight), 0.1f, 350.f);
-
+    camera->Move(movement, 0, 0);
     
-
-    // Some math to make the camera move in a nice way
-    glm::vec3 cameraPosition = glm::vec3(0, 2, 20);
-    float lookRotationY = 0;
-    float lookRotationX = 0;
-    glm::mat4 cameraTransform = 
-                    glm::rotate(lookRotationY, glm::vec3(0, 1, 0)) *
-                    glm::rotate(lookRotationX, glm::vec3(1, 0, 0)) *
-                    glm::translate(-cameraPosition);
-
-    glm::mat4 VP = projection * cameraTransform;
+    glm::mat4 VP = camera->Projection() * camera->View();
 
     // Move and rotate various SceneNodes
     groundNode->position = { 0, -1, 0 };
 
-    treeNode->position = {0, 0, 0};
-    treeNode->scale = glm::vec3(1,1,1);
+    treeNode->position = { 0, 0, 0 };
+    treeNode->scale = glm::vec3(1, 1, 1);
 
     updateNodeTransformations(rootNode, VP);
-
-
-
 
 }
 
@@ -229,4 +203,9 @@ void renderFrame(GLFWwindow* window) {
     glViewport(0, 0, windowWidth, windowHeight);
 
     renderNode(rootNode);
+}
+
+void exitGame()
+{
+
 }
