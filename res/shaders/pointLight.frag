@@ -23,6 +23,8 @@ void main()
 {
     vec2 uv = (pos_in.xy + vec2(1.0, 1.0)) * 0.5;
     vec4 pos = texture(posSampler, uv);
+
+
     vec3 normal = texture(normalSampler, uv).xyz;
 
     vec3 lightDir = pos.xyz - lightViewPos;

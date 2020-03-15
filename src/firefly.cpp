@@ -42,7 +42,7 @@ Fireflies::Fireflies(int windowWidth, int windowHeight, unsigned int count, cons
 	
 	pointLightShader.makeBasicShader(resource_path + "shaders/pointLight.vert", resource_path + "shaders/pointLight.frag");
 
-	Mesh sphere = generateSphere(1.0f, 100, 100);
+	Mesh sphere = generateSphere(1.0f, 50, 50);
 	sphereVAO = generateBuffer(sphere);
 	sphereIndexCount = sphere.indices.size();
 
