@@ -23,6 +23,7 @@
 #include "utilities/objLoader.h"
 #include "utilities/glfont.h"
 #include "utilities/textures.h"
+#include "firefly.h"
 
 #define RESOURCE_PATH std::string("../../../res/")
 
@@ -34,6 +35,8 @@ SceneNode* groundNode;
 SceneNode* treeNode;
 unsigned int squareVAO;
 unsigned int squareIndexCount;
+
+Fireflies* fireflies;
 
 // These are heap allocated, because they should not be initialised at the start of the program
 Gloom::Shader* objectShader;
@@ -82,7 +85,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     glfwSetCursorPosCallback(window, mouseCallback);
 
     // Create camera
-    camera = new Camera(glm::vec3(0.0f,1.0f,20.0f), windowWidth, windowHeight);
+    camera = new Camera(glm::vec3(0.0f,2.0f,0.7f), windowWidth, windowHeight);
 
     // Create shaders
     objectShader = new Gloom::Shader();
@@ -91,8 +94,9 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     postShader->makeBasicShader(RESOURCE_PATH + "shaders/post.vert", RESOURCE_PATH + "shaders/post.frag");
 
     // Create textures
-    g_buffer = Textures::CreateRenderTarget(windowWidth, windowHeight, 3);
+    g_buffer = Textures::CreateRenderTarget(windowWidth, windowHeight, 4, true);
     unsigned int treeTextureID = Textures::LoadPNG(RESOURCE_PATH + "textures/tree.png");
+    unsigned int groundTextureID = Textures::LoadPNG(RESOURCE_PATH + "textures/ground.png");
 
     // Create meshes
     Mesh ground = cube(groundDimensions, glm::vec2(30, 40));
@@ -115,11 +119,13 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     groundNode->vertexArrayObjectID = groundVAO;
     groundNode->VAOIndexCount = ground.indices.size();
-    groundNode->textureID = treeTextureID;
+    groundNode->textureID = groundTextureID;
 
     treeNode->vertexArrayObjectID = treeVAO;
     treeNode->VAOIndexCount = tree.indices.size();
     treeNode->textureID = treeTextureID;
+
+    fireflies = new Fireflies(windowWidth, windowHeight, 100, RESOURCE_PATH);
 
     getTimeDeltaSeconds();
 
@@ -151,13 +157,15 @@ void updateFrame(GLFWwindow* window) {
         movement += glm::vec3(0.0f, 1.0f, 0.0f);
     }
     
-    camera->Move(movement, 0, 0);
+    camera->Move(movement*0.1f, 0, 0);
     
     // Move and rotate various SceneNodes
-    groundNode->position = { 0, -1, 0 };
+    groundNode->position = { 0, 0, 0 };
 
     treeNode->position = { 0, 0, 0 };
     treeNode->scale = glm::vec3(1, 1, 1);
+
+    fireflies->Update();
 
     updateNodeTransformations(rootNode, camera->View(), camera->Projection());
 
@@ -188,8 +196,8 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar,
 }
 
 void renderNode(SceneNode* node) {
-    glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->MV));
-    glUniformMatrix4fv(4, 1, GL_FALSE, glm::value_ptr(node->MVP));
+    glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(node->MV));
+    glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(node->MVP));
     glBindTextureUnit(0, node->textureID);
 
     switch(node->nodeType) {
@@ -209,17 +217,24 @@ void renderNode(SceneNode* node) {
 }
 
 void renderFrame(GLFWwindow* window) {
-    //glClearBufferData(GL_FRAMEBUFFER,)
-
     int windowWidth, windowHeight;
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
     glViewport(0, 0, windowWidth, windowHeight);
 
     glBindFramebuffer(GL_FRAMEBUFFER, g_buffer.targetID);
-    glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
+    //glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     objectShader->activate();
     renderNode(rootNode);
+
+    fireflies->RenderLights(
+        g_buffer.textureIDs[0],
+        g_buffer.textureIDs[1],
+        g_buffer.depthID,
+        camera->View(),
+        camera->Projection()
+    );
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -227,6 +242,7 @@ void renderFrame(GLFWwindow* window) {
     glBindTextureUnit(0, g_buffer.textureIDs[0]);
     glBindTextureUnit(1, g_buffer.textureIDs[1]);
     glBindTextureUnit(2, g_buffer.textureIDs[2]);
+    glBindTextureUnit(3, fireflies->GetLightTexture());
     postShader->activate();
     glBindVertexArray(squareVAO);
     glDrawElements(GL_TRIANGLES, squareIndexCount, GL_UNSIGNED_INT, nullptr);

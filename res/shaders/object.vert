@@ -5,8 +5,8 @@ in layout(location = 1) vec3 normal_in;
 in layout(location = 2) vec2 textureCoordinates_in;
 
 
-uniform layout(location = 3) mat4 MV;
-uniform layout(location = 4) mat4 MVP;
+uniform layout(location = 0) mat4 MV;
+uniform layout(location = 1) mat4 MVP;
 
 out layout(location = 0) vec4 view_pos_out;
 out layout(location = 1) vec3 normal_out;

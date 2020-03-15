@@ -9,7 +9,8 @@ namespace Textures
 	struct RenderTarget
 	{
 		unsigned int targetID;
+		unsigned int depthID;
 		std::vector<unsigned int> textureIDs;
 	};
-	RenderTarget CreateRenderTarget(int width, int height, int textureCount);
+	RenderTarget CreateRenderTarget(int width, int height, int textureCount, bool depth);
 }

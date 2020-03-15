@@ -22,7 +22,7 @@ unsigned int Textures::LoadPNG(const std::string& file_path)
     return id;
 }
 
-Textures::RenderTarget Textures::CreateRenderTarget(int width, int height, int textureCount)
+Textures::RenderTarget Textures::CreateRenderTarget(int width, int height, int textureCount, bool depth)
 {
     assert(textureCount > 0 && textureCount <= 4);
     RenderTarget out;
@@ -35,7 +35,7 @@ Textures::RenderTarget Textures::CreateRenderTarget(int width, int height, int t
         unsigned int targetTexture;
         glGenTextures(1, &targetTexture);
         glBindTexture(GL_TEXTURE_2D, targetTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGB, GL_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, targetTexture, 0);
@@ -45,11 +45,16 @@ Textures::RenderTarget Textures::CreateRenderTarget(int width, int height, int t
     GLenum DrawBuffers[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
     glDrawBuffers(textureCount, DrawBuffers);
 
-    unsigned int depthBuffer;
-    glGenRenderbuffers(1, &depthBuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
+    if (depth)
+    {
+        unsigned int depthBuffer;
+        glGenRenderbuffers(1, &depthBuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
+
+        out.depthID = depthBuffer;
+    }
 
     out.targetID = renderTargetID;
 
