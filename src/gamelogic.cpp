@@ -91,7 +91,8 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     postShader->makeBasicShader(RESOURCE_PATH + "shaders/post.vert", RESOURCE_PATH + "shaders/post.frag");
 
     // Create textures
-    g_buffer = Textures::CreateRenderTarget(windowWidth, windowHeight, 1);
+    g_buffer = Textures::CreateRenderTarget(windowWidth, windowHeight, 3);
+    unsigned int treeTextureID = Textures::LoadPNG(RESOURCE_PATH + "textures/tree.png");
 
     // Create meshes
     Mesh ground = cube(groundDimensions, glm::vec2(30, 40));
@@ -114,9 +115,11 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     groundNode->vertexArrayObjectID = groundVAO;
     groundNode->VAOIndexCount = ground.indices.size();
+    groundNode->textureID = treeTextureID;
 
     treeNode->vertexArrayObjectID = treeVAO;
     treeNode->VAOIndexCount = tree.indices.size();
+    treeNode->textureID = treeTextureID;
 
     getTimeDeltaSeconds();
 
@@ -150,19 +153,17 @@ void updateFrame(GLFWwindow* window) {
     
     camera->Move(movement, 0, 0);
     
-    glm::mat4 VP = camera->Projection() * camera->View();
-
     // Move and rotate various SceneNodes
     groundNode->position = { 0, -1, 0 };
 
     treeNode->position = { 0, 0, 0 };
     treeNode->scale = glm::vec3(1, 1, 1);
 
-    updateNodeTransformations(rootNode, VP);
+    updateNodeTransformations(rootNode, camera->View(), camera->Projection());
 
 }
 
-void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar) {
+void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar, const glm::mat4& P) {
     glm::mat4 transformationMatrix =
               glm::translate(node->position)
             * glm::translate(node->referencePoint)
@@ -172,7 +173,8 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
             * glm::scale(node->scale)
             * glm::translate(-node->referencePoint);
 
-    node->currentTransformationMatrix = transformationThusFar * transformationMatrix;
+    node->MV = transformationThusFar * transformationMatrix;
+    node->MVP = P * node->MV;
 
     switch(node->nodeType) {
         case GEOMETRY: break;
@@ -181,12 +183,14 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
     }
 
     for(SceneNode* child : node->children) {
-        updateNodeTransformations(child, node->currentTransformationMatrix);
+        updateNodeTransformations(child, node->MV, P);
     }
 }
 
 void renderNode(SceneNode* node) {
-    glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
+    glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->MV));
+    glUniformMatrix4fv(4, 1, GL_FALSE, glm::value_ptr(node->MVP));
+    glBindTextureUnit(0, node->textureID);
 
     switch(node->nodeType) {
         case GEOMETRY:
@@ -220,7 +224,9 @@ void renderFrame(GLFWwindow* window) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glBindTexture(GL_TEXTURE_2D, g_buffer.textureIDs[0]);
+    glBindTextureUnit(0, g_buffer.textureIDs[0]);
+    glBindTextureUnit(1, g_buffer.textureIDs[1]);
+    glBindTextureUnit(2, g_buffer.textureIDs[2]);
     postShader->activate();
     glBindVertexArray(squareVAO);
     glDrawElements(GL_TRIANGLES, squareIndexCount, GL_UNSIGNED_INT, nullptr);

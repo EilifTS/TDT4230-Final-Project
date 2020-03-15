@@ -1,14 +1,18 @@
 #version 430 core
 
-in layout(location = 0) vec3 normal;
-in layout(location = 1) vec2 textureCoordinates;
+layout(binding = 0) uniform sampler2D tSampler;
 
-out layout(location = 0) vec4 color;
+in layout(location = 0) vec4 view_pos;
+in layout(location = 1) vec3 normal;
+in layout(location = 2) vec2 textureCoordinates;
 
-float rand(vec2 co) { return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
-float dither(vec2 uv) { return (rand(uv)*2.0-1.0) / 256.0; }
+out layout(location = 0) vec4 pos_out;
+out layout(location = 1) vec4 normal_out;
+out layout(location = 2) vec4 color_out;
 
 void main()
 {
-    color = vec4(0.5 * normal + 0.5, 1.0);
+    pos_out = view_pos;
+    normal_out = vec4(normalize(normal), 1.0);
+    color_out = texture(tSampler, textureCoordinates);
 }

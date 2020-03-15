@@ -41,7 +41,8 @@ struct SceneNode {
 	glm::vec3 scale;
 
 	// A transformation matrix representing the transformation of the node's location relative to its parent. This matrix is updated every frame.
-	glm::mat4 currentTransformationMatrix;
+	glm::mat4 MV;
+	glm::mat4 MVP;
 
 	// The location of the node's reference point
 	glm::vec3 referencePoint;
@@ -49,6 +50,9 @@ struct SceneNode {
 	// The ID of the VAO containing the "appearance" of this SceneNode.
 	int vertexArrayObjectID;
 	unsigned int VAOIndexCount;
+
+	// THe ID of the texture it is using
+	unsigned int textureID;
 
 	// Node type is used to determine how to handle the contents of a node
 	SceneNodeType nodeType;
