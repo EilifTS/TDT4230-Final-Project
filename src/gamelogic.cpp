@@ -23,15 +23,6 @@
 #include "utilities/objLoader.h"
 #include "utilities/glfont.h"
 
-enum KeyFrameAction {
-    BOTTOM, TOP
-};
-
-#include <timestamps.h>
-
-unsigned int currentKeyFrame = 0;
-unsigned int previousKeyFrame = 0;
-
 Camera* camera;
 
 SceneNode* rootNode;
@@ -207,5 +198,8 @@ void renderFrame(GLFWwindow* window) {
 
 void exitGame()
 {
-
+    delete camera;
+    delete treeNode;
+    delete groundNode;
+    delete rootNode;
 }
