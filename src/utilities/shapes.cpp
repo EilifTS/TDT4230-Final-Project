@@ -203,3 +203,27 @@ Mesh generateSphere(float sphereRadius, int slices, int layers) {
     mesh.textureCoordinates = uvs;
     return mesh;
 }
+
+Mesh generateSquare()
+{
+    Mesh out;
+    out.vertices.push_back({ -1.0f, 1.0f, 0.0f });
+    out.vertices.push_back({ 1.0f, 1.0f, 0.0f });
+    out.vertices.push_back({ 1.0f, -1.0f, 0.0f });
+    out.vertices.push_back({ -1.0f, -1.0f, 0.0f });
+
+    out.normals.push_back({ 0.0f,0.0f,1.0f });
+    out.normals.push_back({ 0.0f,0.0f,1.0f });
+    out.normals.push_back({ 0.0f,0.0f,1.0f });
+    out.normals.push_back({ 0.0f,0.0f,1.0f });
+
+    out.indices.push_back(0);
+    out.indices.push_back(3);
+    out.indices.push_back(2);
+
+    out.indices.push_back(0);
+    out.indices.push_back(2);
+    out.indices.push_back(1);
+
+    return out;
+}

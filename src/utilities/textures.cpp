@@ -53,6 +53,6 @@ Textures::RenderTarget Textures::CreateRenderTarget(int width, int height, int t
 
     out.targetID = renderTargetID;
 
-    assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) = GL_FRAMEBUFFER_COMPLETE);
+    assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
     return out;
 }

@@ -22,16 +22,25 @@
 #include "utilities/imageLoader.hpp"
 #include "utilities/objLoader.h"
 #include "utilities/glfont.h"
+#include "utilities/textures.h"
+
+#define RESOURCE_PATH std::string("../../../res/")
 
 Camera* camera;
 
+// Objects
 SceneNode* rootNode;
 SceneNode* groundNode;
 SceneNode* treeNode;
+unsigned int squareVAO;
+unsigned int squareIndexCount;
 
 // These are heap allocated, because they should not be initialised at the start of the program
-Gloom::Shader* shader;
-sf::Sound* sound;
+Gloom::Shader* objectShader;
+Gloom::Shader* postShader;
+
+// Textures
+Textures::RenderTarget g_buffer;
 
 const glm::vec3 groundDimensions(100, 1, 100);
 
@@ -76,17 +85,24 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     camera = new Camera(glm::vec3(0.0f,1.0f,20.0f), windowWidth, windowHeight);
 
     // Create shaders
-    shader = new Gloom::Shader();
-    shader->makeBasicShader("../../../res/shaders/simple.vert", "../../../res/shaders/simple.frag");
-    shader->activate();
+    objectShader = new Gloom::Shader();
+    objectShader->makeBasicShader(RESOURCE_PATH + "shaders/object.vert", RESOURCE_PATH + "shaders/object.frag");
+    postShader = new Gloom::Shader();
+    postShader->makeBasicShader(RESOURCE_PATH + "shaders/post.vert", RESOURCE_PATH + "shaders/post.frag");
+
+    // Create textures
+    g_buffer = Textures::CreateRenderTarget(windowWidth, windowHeight, 1);
 
     // Create meshes
     Mesh ground = cube(groundDimensions, glm::vec2(30, 40));
-    Mesh tree = OBJLoader::LoadFromFile("../../../res/meshes/tree1.obj");
+    Mesh tree = OBJLoader::LoadFromFile(RESOURCE_PATH + "meshes/tree1.obj");
+    Mesh square = generateSquare();
 
     // Fill buffers
     unsigned int groundVAO = generateBuffer(ground);
     unsigned int treeVAO  = generateBuffer(tree);
+    squareVAO = generateBuffer(square);
+    squareIndexCount = square.indices.size();
 
     // Construct scene
     rootNode = createSceneNode();
@@ -189,11 +205,25 @@ void renderNode(SceneNode* node) {
 }
 
 void renderFrame(GLFWwindow* window) {
+    //glClearBufferData(GL_FRAMEBUFFER,)
+
     int windowWidth, windowHeight;
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
     glViewport(0, 0, windowWidth, windowHeight);
 
+    glBindFramebuffer(GL_FRAMEBUFFER, g_buffer.targetID);
+    glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    objectShader->activate();
     renderNode(rootNode);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glBindTexture(GL_TEXTURE_2D, g_buffer.textureIDs[0]);
+    postShader->activate();
+    glBindVertexArray(squareVAO);
+    glDrawElements(GL_TRIANGLES, squareIndexCount, GL_UNSIGNED_INT, nullptr);
 }
 
 void exitGame()
