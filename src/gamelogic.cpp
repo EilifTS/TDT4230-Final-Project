@@ -94,7 +94,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     postShader->makeBasicShader(RESOURCE_PATH + "shaders/post.vert", RESOURCE_PATH + "shaders/post.frag");
 
     // Create textures
-    g_buffer = Textures::CreateRenderTarget(windowWidth, windowHeight, 4, true);
+    g_buffer = Textures::CreateRenderTarget(windowWidth, windowHeight, { {GL_RGBA, GL_UNSIGNED_BYTE}, {GL_RGBA16F, GL_FLOAT } }, true);
     unsigned int treeTextureID = Textures::LoadPNG(RESOURCE_PATH + "textures/tree.png");
     unsigned int groundTextureID = Textures::LoadPNG(RESOURCE_PATH + "textures/ground.png");
 
@@ -229,7 +229,6 @@ void renderFrame(GLFWwindow* window) {
     renderNode(rootNode);
 
     fireflies->RenderLights(
-        g_buffer.textureIDs[0],
         g_buffer.textureIDs[1],
         g_buffer.depthID,
         camera->View(),
@@ -241,8 +240,7 @@ void renderFrame(GLFWwindow* window) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindTextureUnit(0, g_buffer.textureIDs[0]);
     glBindTextureUnit(1, g_buffer.textureIDs[1]);
-    glBindTextureUnit(2, g_buffer.textureIDs[2]);
-    glBindTextureUnit(3, fireflies->GetLightTexture());
+    glBindTextureUnit(2, fireflies->GetLightTexture());
     postShader->activate();
     glBindVertexArray(squareVAO);
     glDrawElements(GL_TRIANGLES, squareIndexCount, GL_UNSIGNED_INT, nullptr);

@@ -11,11 +11,13 @@ uniform layout(location = 3) float maxRadius;
 
 
 out layout(location = 0) vec4 pos_out;
+out layout(location = 1) vec3 view_pos_out;
 
 void main()
 {
-    vec3 newVPos = vPos * maxRadius + lightViewPos;
-    pos_out = P * vec4(newVPos, 1.0f);
+    view_pos_out = vPos * maxRadius + lightViewPos;
+    pos_out = P * vec4(view_pos_out, 1.0f);
     gl_Position = pos_out;
     pos_out.xyz /= pos_out.w;
+    view_pos_out /= view_pos_out.z;
 }

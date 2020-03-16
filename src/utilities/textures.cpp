@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <assert.h>
 
+
 unsigned int Textures::LoadPNG(const std::string& file_path)
 {
     PNGImage image = loadPNGFile(file_path);
@@ -22,28 +23,29 @@ unsigned int Textures::LoadPNG(const std::string& file_path)
     return id;
 }
 
-Textures::RenderTarget Textures::CreateRenderTarget(int width, int height, int textureCount, bool depth)
+Textures::RenderTarget Textures::CreateRenderTarget(int width, int height, const std::vector<std::pair<unsigned int, unsigned int>>& texture_formats, bool depth)
 {
-    assert(textureCount > 0 && textureCount <= 4);
+    assert(texture_formats.size() > 0 && texture_formats.size() <= 4);
     RenderTarget out;
     unsigned int renderTargetID = 0;
     glGenFramebuffers(1, &renderTargetID);
     glBindFramebuffer(GL_FRAMEBUFFER, renderTargetID);
 
-    for (int i = 0; i < textureCount; i++)
+    int i = 0;
+    for (auto f : texture_formats)
     {
         unsigned int targetTexture;
         glGenTextures(1, &targetTexture);
         glBindTexture(GL_TEXTURE_2D, targetTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, f.first, width, height, 0, GL_RGBA, f.second, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, targetTexture, 0);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i++, targetTexture, 0);
 
         out.textureIDs.push_back(targetTexture);
     }
     GLenum DrawBuffers[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
-    glDrawBuffers(textureCount, DrawBuffers);
+    glDrawBuffers(texture_formats.size(), DrawBuffers);
 
     if (depth)
     {

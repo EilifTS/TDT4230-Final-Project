@@ -11,7 +11,7 @@ public:
 
 	void Update();
 	void RenderFlies();
-	void RenderLights(unsigned int posID, unsigned int normalID, unsigned int depthID, const glm::mat4& V, const glm::mat4& P);
+	void RenderLights(unsigned int normalDepthID, unsigned int depthID, const glm::mat4& V, const glm::mat4& P);
 
 	unsigned int GetLightTexture() { return lightTarget.textureIDs[0]; }
 

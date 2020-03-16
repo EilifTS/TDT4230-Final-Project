@@ -12,5 +12,9 @@ namespace Textures
 		unsigned int depthID;
 		std::vector<unsigned int> textureIDs;
 	};
-	RenderTarget CreateRenderTarget(int width, int height, int textureCount, bool depth);
+	RenderTarget CreateRenderTarget(int width, int height, const std::vector<std::pair<unsigned int, unsigned int>>& texture_formats, bool depth);
+
+	// G-Buffer
+	// 3x8bit Color, 8bit emission
+	// 2x16bit normal, 16bit depth, 16bit diffuse
 }

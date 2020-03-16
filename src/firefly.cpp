@@ -46,7 +46,7 @@ Fireflies::Fireflies(int windowWidth, int windowHeight, unsigned int count, cons
 	sphereVAO = generateBuffer(sphere);
 	sphereIndexCount = sphere.indices.size();
 
-	lightTarget = Textures::CreateRenderTarget(windowWidth, windowHeight, 1, false);
+	lightTarget = Textures::CreateRenderTarget(windowWidth, windowHeight, { {GL_RGBA16F, GL_FLOAT} }, false);
 }
 
 void Fireflies::Update() {}
@@ -54,7 +54,7 @@ void Fireflies::RenderFlies()
 {
 	
 }
-void Fireflies::RenderLights(unsigned int posID, unsigned int normalID, unsigned int depthID, const glm::mat4& V, const glm::mat4& P)
+void Fireflies::RenderLights(unsigned int normalDepthID, unsigned int depthID, const glm::mat4& V, const glm::mat4& P)
 {
 	glDepthFunc(GL_GREATER);
 	glDepthMask(false);
@@ -70,8 +70,7 @@ void Fireflies::RenderLights(unsigned int posID, unsigned int normalID, unsigned
 
 	pointLightShader.activate();
 	glBindVertexArray(sphereVAO);
-	glBindTextureUnit(0, posID);
-	glBindTextureUnit(1, normalID);
+	glBindTextureUnit(0, normalDepthID);
 	glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(P));
 
 	for (const firefly& f : fireflies)

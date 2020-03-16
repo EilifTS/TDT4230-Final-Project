@@ -8,15 +8,11 @@ in layout(location = 0) vec4 view_pos;
 in layout(location = 1) vec3 normal;
 in layout(location = 2) vec2 textureCoordinates;
 
-out layout(location = 0) vec4 pos_out;
-out layout(location = 1) vec4 normal_out;
-out layout(location = 2) vec4 color_out;
-out layout(location = 3) vec4 light_prop_out;
+out layout(location = 0) vec4 color_em_out;
+out layout(location = 1) vec4 normal_depth_diff_out;
 
 void main()
 {
-    pos_out = view_pos;
-    normal_out = vec4(normalize(normal), 1.0);
-    color_out = texture(tSampler, textureCoordinates);
-    light_prop_out = vec4(diffuse_emmisive.xy, 0.0, 0.0);
+    color_em_out = vec4(texture(tSampler, textureCoordinates).xyz, diffuse_emmisive.y);
+    normal_depth_diff_out = vec4(normal.xy / normal.z, view_pos.z, diffuse_emmisive.x);
 }
