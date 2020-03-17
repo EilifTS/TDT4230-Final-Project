@@ -21,32 +21,31 @@ namespace
 	}
 }
 
-Fireflies::Fireflies(int windowWidth, int windowHeight, unsigned int count, const std::string& resource_path)
+Fireflies::Fireflies(SceneNode* root, int windowWidth, int windowHeight, unsigned int count, const std::string& resource_path)
 {
 	srand(86859302);
-	for (int i = 0; i < count; i++)
-	{
-		glm::vec3 pos = {
-			(float)rand() / RAND_MAX,
-			0.0f,
-			(float)rand() / RAND_MAX,
-		};
-		pos -= glm::vec3(0.5f, 0.0f, 0.5f);
-		pos *= 50.0f;
-		pos.y += 0.6f;
 
-		float phase = (float)rand() / RAND_MAX;
-		float maxIntensity = 0.5f + (float)rand() / RAND_MAX;
-		float maxRadius = calculateMaxRadius(maxIntensity);
-		fireflies.push_back({ pos, phase, maxIntensity, maxRadius });
-	}
-	
-	pointLightShader.makeBasicShader(resource_path + "shaders/pointLight.vert", resource_path + "shaders/pointLight.frag");
-
+	unsigned int fireflyTextID = Textures::LoadPNG(resource_path + "textures/firefly.png");
 	Mesh sphere = generateSphere(1.0f, 50, 50);
 	sphereVAO = generateBuffer(sphere);
 	sphereIndexCount = sphere.indices.size();
 
+	for (int i = 0; i < count; i++)
+	{
+		float rndAngle = 2.0f * 3.141592f * ((float)rand() / RAND_MAX);
+		float rndDist = 1.0f + 1.0f * ((float)rand() / RAND_MAX);
+		glm::vec3 pos = glm::vec3(cosf(rndAngle), 0, sinf(rndAngle)) * rndDist;
+
+		float phase = (float)rand() / RAND_MAX;
+		float maxIntensity = 0.5f;// +((float)rand() / RAND_MAX);
+		float maxRadius = calculateMaxRadius(maxIntensity);
+
+		fireflies.push_back({ pos, phase, maxIntensity, maxRadius });
+	}
+	
+	pointLightShader.makeBasicShader(resource_path + "shaders/pointLight.vert", resource_path + "shaders/pointLight.frag");
+	fireflyShader.makeBasicShader(resource_path + "shaders/firefly.vert", resource_path + "shaders/firefly.frag");
+	fireflyTarget = Textures::CreateRenderTarget(windowWidth, windowHeight, { {GL_RGBA16F, GL_FLOAT} }, false);
 	lightTarget = Textures::CreateRenderTarget(windowWidth, windowHeight, { {GL_RGBA16F, GL_FLOAT} }, false);
 }
 
@@ -54,13 +53,43 @@ void Fireflies::Update(double time)
 {
 	for (auto& f : fireflies)
 	{
-		f.pos.y = 2.0f + 1.49f * sinf(time*1.0f + 2*3.14*f.phase);
+		float heightPhase = fmodf(time * 0.0231f + f.phase, 1.0f);
+		float anglePhase = fmodf(f.phase * 577.3111f + time*0.0724, 1.0f);
+		float distPhase = fmodf(f.phase * 451.231, 1.0f);
+		float height = 0.5f + 3.4f * 0.5f* (1.0f + sinf(2*3.141592f * heightPhase));
+		float angle = 2.0f * 3.141592f * anglePhase;
+		float dist = 0.4f + 0.4f * distPhase;
+		f.pos = glm::vec3(cosf(angle), 0, sinf(angle)) * dist;
+		f.pos.y = height;
 	}
 }
-void Fireflies::RenderFlies()
+void Fireflies::RenderFlies(unsigned int depthID, const glm::mat4& V, const glm::mat4& P) // depthID, cameraMatrix
 {
-	
+	//glEnable(GL_BLEND);
+	//glBlendFunc(GL_ONE, GL_ONE);
+	glDepthMask(false);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, fireflyTarget.targetID);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthID);
+
+	fireflyShader.activate();
+	glBindVertexArray(sphereVAO);
+	glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(P));
+
+	for (const firefly& f : fireflies)
+	{
+		glm::vec3 viewPos = V * glm::vec4(f.pos, 1.0f);
+		glUniform3fv(0, 1, glm::value_ptr(viewPos));
+
+		glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, nullptr);
+	}
+
+	glDepthMask(true);
+	//glDisable(GL_BLEND);
 }
+
 void Fireflies::RenderLights(unsigned int normalDepthID, unsigned int depthID, const glm::mat4& V, const glm::mat4& P)
 {
 	glDepthFunc(GL_GREATER);

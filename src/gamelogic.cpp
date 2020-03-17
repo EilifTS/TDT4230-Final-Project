@@ -125,7 +125,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     treeNode->VAOIndexCount = tree.indices.size();
     treeNode->textureID = treeTextureID;
 
-    fireflies = new Fireflies(windowWidth, windowHeight, 1000, RESOURCE_PATH);
+    fireflies = new Fireflies(rootNode, windowWidth, windowHeight, 30, RESOURCE_PATH);
 
     getTimeDeltaSeconds();
 
@@ -163,7 +163,7 @@ void updateFrame(GLFWwindow* window) {
     // Move and rotate various SceneNodes
     groundNode->position = { 0, 0, 0 };
 
-    treeNode->position = { 0, 0, 0 };
+    treeNode->position = { 0, 0.5f , 0 };
     treeNode->scale = glm::vec3(1, 1, 1);
 
     fireflies->Update(totalElapsedTime);
@@ -238,13 +238,22 @@ void renderFrame(GLFWwindow* window) {
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
     glBindTextureUnit(0, g_buffer.textureIDs[0]);
     glBindTextureUnit(1, g_buffer.textureIDs[1]);
-    glBindTextureUnit(2, fireflies->GetLightTexture());
+    glBindTextureUnit(2, fireflies->GetFireflyTexture());
+    glBindTextureUnit(3, fireflies->GetLightTexture());
     postShader->activate();
     glBindVertexArray(squareVAO);
     glDrawElements(GL_TRIANGLES, squareIndexCount, GL_UNSIGNED_INT, nullptr);
+    glEnable(GL_DEPTH_TEST);
+
+    fireflies->RenderFlies(
+        g_buffer.depthID,
+        camera->View(),
+        camera->Projection()
+    );
 }
 
 void exitGame()
