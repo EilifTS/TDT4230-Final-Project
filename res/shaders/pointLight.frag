@@ -7,6 +7,7 @@ uniform layout(location = 2) float phase;
 uniform layout(location = 3) float maxIntensity;
 uniform layout(location = 4) float maxRadius;
 
+
 in layout(location = 0) vec4 pos_in;
 in layout(location = 1) vec3 view_pos_in;
 
@@ -19,6 +20,9 @@ float L(float d)
 {
     return 1.0 / (la + lb * d + lc * d * d);
 }
+
+vec3 lightColor1 = vec3(173.0, 255.0, 47.0) / 255.0;
+vec3 lightColor2 = vec3(255.0, 73.0, 12.0) / 255.0;
 
 void main()
 {
@@ -39,6 +43,6 @@ void main()
 
         vec3 normal = vec3(normal_depth.xy, 0);
         normal.z = sqrt(1 - length(normal)*length(normal));
-        light_out.x = clamp(-dot(normal, lightDir), 0, 1) * L(radius);
+        light_out.xyz = clamp(-dot(normal, lightDir), 0, 1) * L(radius) * mix(lightColor1, lightColor2, phase);
     }
 }

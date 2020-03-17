@@ -8,7 +8,7 @@ in layout(location = 0) vec4 pos_in;
 
 out vec4 color;
 
-vec3 diffuseColor = vec3(173.0, 255.0, 47.0) / 255.0;
+//vec3 diffuseColor = vec3(173.0, 255.0, 47.0) / 255.0;
 
 
 void main()
@@ -19,9 +19,9 @@ void main()
 
     vec4 c_e = texture(colorEmSampler, uv);
 
-    float diffuse = texture(diffuseSpecular, uv).x;
+    vec3 diffuse = texture(diffuseSpecular, uv).xyz;
     float ambient = 0.3;
 
-    color = vec4(c_e.xyz * (ambient + diffuse * diffuseColor), 1.0);
+    color = vec4(c_e.xyz * (ambient + diffuse), 1.0);
     //color = vec4(normal.xyz, 1.0);
 }
