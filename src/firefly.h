@@ -9,7 +9,7 @@ class Fireflies
 public:
 	Fireflies(int windowWidth, int windowHeight, unsigned int count, const std::string& resource_path);
 
-	void Update();
+	void Update(double time);
 	void RenderFlies();
 	void RenderLights(unsigned int normalDepthID, unsigned int depthID, const glm::mat4& V, const glm::mat4& P);
 
@@ -19,6 +19,7 @@ private:
 	struct firefly
 	{
 		glm::vec3 pos;
+		float phase;
 		float maxIntensity;
 		float maxRadius;
 	};

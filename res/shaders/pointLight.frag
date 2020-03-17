@@ -3,8 +3,9 @@
 layout(binding = 0) uniform sampler2D normalDepthSampler;
 
 uniform layout(location = 0) vec3 lightViewPos;
-uniform layout(location = 2) float maxIntensity;
-uniform layout(location = 3) float maxRadius;
+uniform layout(location = 2) float phase;
+uniform layout(location = 3) float maxIntensity;
+uniform layout(location = 4) float maxRadius;
 
 in layout(location = 0) vec4 pos_in;
 in layout(location = 1) vec3 view_pos_in;
@@ -36,7 +37,8 @@ void main()
     {
         lightDir = normalize(lightDir);
 
-        vec3 normal = normalize(vec3(normal_depth.xy, 1));
+        vec3 normal = vec3(normal_depth.xy, 0);
+        normal.z = sqrt(1 - length(normal)*length(normal));
         light_out.x = clamp(-dot(normal, lightDir), 0, 1) * L(radius);
     }
 }

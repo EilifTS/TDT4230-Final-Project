@@ -6,8 +6,9 @@ in layout(location = 2) vec2 textureCoordinates_in;
 
 uniform layout(location = 0) vec3 lightViewPos;
 uniform layout(location = 1) mat4 P;
-uniform layout(location = 2) float maxIntensity;
-uniform layout(location = 3) float maxRadius;
+uniform layout(location = 2) float phase;
+uniform layout(location = 3) float maxIntensity;
+uniform layout(location = 4) float maxRadius;
 
 
 out layout(location = 0) vec4 pos_out;

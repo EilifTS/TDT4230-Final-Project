@@ -35,9 +35,10 @@ Fireflies::Fireflies(int windowWidth, int windowHeight, unsigned int count, cons
 		pos *= 50.0f;
 		pos.y += 0.6f;
 
+		float phase = (float)rand() / RAND_MAX;
 		float maxIntensity = 0.5f + (float)rand() / RAND_MAX;
 		float maxRadius = calculateMaxRadius(maxIntensity);
-		fireflies.push_back({ pos, maxIntensity, maxRadius });
+		fireflies.push_back({ pos, phase, maxIntensity, maxRadius });
 	}
 	
 	pointLightShader.makeBasicShader(resource_path + "shaders/pointLight.vert", resource_path + "shaders/pointLight.frag");
@@ -49,7 +50,13 @@ Fireflies::Fireflies(int windowWidth, int windowHeight, unsigned int count, cons
 	lightTarget = Textures::CreateRenderTarget(windowWidth, windowHeight, { {GL_RGBA16F, GL_FLOAT} }, false);
 }
 
-void Fireflies::Update() {}
+void Fireflies::Update(double time)
+{
+	for (auto& f : fireflies)
+	{
+		f.pos.y = 2.0f + 1.49f * sinf(time*1.0f + 2*3.14*f.phase);
+	}
+}
 void Fireflies::RenderFlies()
 {
 	
@@ -78,8 +85,9 @@ void Fireflies::RenderLights(unsigned int normalDepthID, unsigned int depthID, c
 		glm::vec3 viewPos = V * glm::vec4(f.pos, 1.0f);
 
 		glUniform3fv(0, 1, glm::value_ptr(viewPos));
-		glUniform1f(2, f.maxIntensity);
-		glUniform1f(3, f.maxRadius);
+		glUniform1f(2, fmod(f.phase * 73.5764f, 1.0f));
+		glUniform1f(3, f.maxIntensity);
+		glUniform1f(4, f.maxRadius);
 
 		glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, nullptr);
 	}

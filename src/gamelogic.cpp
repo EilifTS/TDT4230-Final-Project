@@ -125,7 +125,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     treeNode->VAOIndexCount = tree.indices.size();
     treeNode->textureID = treeTextureID;
 
-    fireflies = new Fireflies(windowWidth, windowHeight, 100, RESOURCE_PATH);
+    fireflies = new Fireflies(windowWidth, windowHeight, 1000, RESOURCE_PATH);
 
     getTimeDeltaSeconds();
 
@@ -136,6 +136,7 @@ void updateFrame(GLFWwindow* window) {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     double timeDelta = getTimeDeltaSeconds();
+    totalElapsedTime += timeDelta;
 
     glm::vec3 movement = glm::vec3();
     if (glfwGetKey(window, GLFW_KEY_A)) {
@@ -165,7 +166,7 @@ void updateFrame(GLFWwindow* window) {
     treeNode->position = { 0, 0, 0 };
     treeNode->scale = glm::vec3(1, 1, 1);
 
-    fireflies->Update();
+    fireflies->Update(totalElapsedTime);
 
     updateNodeTransformations(rootNode, camera->View(), camera->Projection());
 

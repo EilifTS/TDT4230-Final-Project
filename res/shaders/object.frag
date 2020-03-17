@@ -14,5 +14,6 @@ out layout(location = 1) vec4 normal_depth_diff_out;
 void main()
 {
     color_em_out = vec4(texture(tSampler, textureCoordinates).xyz, diffuse_emmisive.y);
-    normal_depth_diff_out = vec4(normal.xy / normal.z, view_pos.z, diffuse_emmisive.x);
+    vec3 normal2 = normalize(normal);
+    normal_depth_diff_out = vec4(normal2.xy, view_pos.z, diffuse_emmisive.x);
 }
