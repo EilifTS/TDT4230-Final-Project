@@ -32,7 +32,10 @@ void main()
     float occlusion = 0.0;
     for(int i = 0; i < NUM_SAMPLES; i++)
     {
+        float a = 1.0;
         vec3 samplePosVS = fragPosVS + tbn * samples[i] * radius;
+        
+        //if(samplePosVS.z > 1.0) a = 0;
 
         // Project samplepos to clip space
         vec4 samplePosCS = projection * vec4(samplePosVS, 1.0f);
@@ -41,10 +44,8 @@ void main()
 
         float sampleDepth = texture(normalDepthDiffuseSampler, samplePosCS.xy).z;
 
-        float a = 0.0;
-
         // Dont count points that are outside the radius
-        a = abs(fragPosVS.z - sampleDepth) < radius ? 1 : 0;
+        a *= abs(fragPosVS.z - sampleDepth) < radius ? 1 : 0;
         
         // Point is occluded if the sample-depth is larger than the samplepoints depth
         a *= (sampleDepth >= samplePosVS.z) ? 1 : 0;
