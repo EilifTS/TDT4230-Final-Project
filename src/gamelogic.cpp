@@ -16,6 +16,7 @@
 #include "gamelogic.h"
 #include "sceneGraph.hpp"
 #include "camera.h"
+#include "ssao.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 
@@ -28,6 +29,8 @@
 #define RESOURCE_PATH std::string("../../../res/")
 
 Camera* camera;
+Fireflies* fireflies;
+SSAO* ssao;
 
 // Objects
 SceneNode* rootNode;
@@ -36,7 +39,6 @@ SceneNode* treeNode;
 unsigned int squareVAO;
 unsigned int squareIndexCount;
 
-Fireflies* fireflies;
 
 // These are heap allocated, because they should not be initialised at the start of the program
 Gloom::Shader* objectShader;
@@ -126,6 +128,8 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     treeNode->textureID = treeTextureID;
 
     fireflies = new Fireflies(rootNode, windowWidth, windowHeight, 30, RESOURCE_PATH);
+
+    ssao = new SSAO(windowWidth, windowHeight, RESOURCE_PATH);
 
     getTimeDeltaSeconds();
 
@@ -229,6 +233,12 @@ void renderFrame(GLFWwindow* window) {
     objectShader->activate();
     renderNode(rootNode);
 
+    ssao->Render(
+        g_buffer.textureIDs[1], 
+        camera->Projection(), 
+        camera->InvProjection()
+    );
+
     fireflies->RenderLights(
         g_buffer.textureIDs[1],
         g_buffer.depthID,
@@ -244,6 +254,7 @@ void renderFrame(GLFWwindow* window) {
     glBindTextureUnit(1, g_buffer.textureIDs[1]);
     glBindTextureUnit(2, fireflies->GetFireflyTexture());
     glBindTextureUnit(3, fireflies->GetLightTexture());
+    glBindTextureUnit(4, ssao->GetTexture());
     postShader->activate();
     glBindVertexArray(squareVAO);
     glDrawElements(GL_TRIANGLES, squareIndexCount, GL_UNSIGNED_INT, nullptr);

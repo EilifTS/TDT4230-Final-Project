@@ -4,6 +4,7 @@ layout(binding = 0) uniform sampler2D colorEmSampler;
 layout(binding = 1) uniform sampler2D normalDepthDiffuseSampler;
 layout(binding = 2) uniform sampler2D firefly;
 layout(binding = 3) uniform sampler2D diffuseSpecular;
+layout(binding = 4) uniform sampler2D ambientSampler;
 
 in layout(location = 0) vec4 pos_in;
 
@@ -22,8 +23,9 @@ void main()
     vec4 c_e = texture(colorEmSampler, uv);
 
     vec3 diffuse = texture(diffuseSpecular, uv).xyz;
-    float ambient = 0.0;
+    float ambient = texture(ambientSampler, uv).x;
 
     color = vec4(c_e.xyz * (ambient + diffuse) + firefly, 1.0);
-    //color = vec4(normal.xyz, 1.0);
+    //color = vec4(ambient.xxx, 1.0);
+    //color = texture(ambientSampler, uv);
 }

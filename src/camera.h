@@ -13,6 +13,7 @@ public:
 	void Move(const glm::vec3& deltaPos, float deltaRotX, float deltaRotY);
 
 	const glm::mat4& Projection() const;
+	const glm::mat4& InvProjection() const { return invProjection; };
 	const glm::mat4& View() const;
 
 private:
@@ -22,6 +23,7 @@ private:
 	glm::vec3 position;
 	float rotationX, rotationY;
 	glm::mat4 projection;
+	glm::mat4 invProjection;
 	glm::mat4 view;
 
 };

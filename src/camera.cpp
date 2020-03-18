@@ -6,7 +6,8 @@
 Camera::Camera(const glm::vec3& position, int windowWidth, int windowHeight)
 	: position(position),
 	rotationX(0.0f), rotationY(0.0f),
-	projection(glm::perspective(glm::radians(FIELD_OF_VIEW), float(windowWidth) / float(windowHeight), NEAR_PLANE, FAR_PLANE))
+	projection(glm::perspective(glm::radians(FIELD_OF_VIEW), float(windowWidth) / float(windowHeight), NEAR_PLANE, FAR_PLANE)),
+	invProjection(glm::inverse(projection))
 {
 	updateView();
 }

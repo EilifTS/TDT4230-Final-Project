@@ -23,6 +23,21 @@ unsigned int Textures::LoadPNG(const std::string& file_path)
     return id;
 }
 
+unsigned int Textures::CreateTextureFromData(int width, int height, const std::vector<glm::vec4>& data)
+{
+    unsigned int id;
+    glGenTextures(1, &id);
+
+    glBindTexture(GL_TEXTURE_2D, id);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, data.data());
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    return id;
+}
+
 Textures::RenderTarget Textures::CreateRenderTarget(int width, int height, const std::vector<std::pair<unsigned int, unsigned int>>& texture_formats, bool depth)
 {
     assert(texture_formats.size() > 0 && texture_formats.size() <= 4);

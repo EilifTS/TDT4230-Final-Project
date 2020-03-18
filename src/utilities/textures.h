@@ -1,10 +1,13 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <glm/glm.hpp>
 
 namespace Textures
 {
 	unsigned int LoadPNG(const std::string& file_path);
+	
+	unsigned int CreateTextureFromData(int width, int height, const std::vector<glm::vec4>& data);
 
 	struct RenderTarget
 	{
