@@ -17,5 +17,10 @@ void main()
 
     float L = 1.0f / (la + lb * radius + lc * radius * radius);
 
+    /*if(flyViewPos.z < -5)
+        L *= 1 + -(flyViewPos.z + 10) * 0.4f;*/
+    if(flyViewPos.z < -10)
+        L *= -(flyViewPos.z) * 0.2f;
+
     color = vec4(flyColor * L, 0.0);
 }

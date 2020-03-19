@@ -7,25 +7,23 @@ layout(binding = 3) uniform sampler2D diffuseSpecular;
 layout(binding = 4) uniform sampler2D ambientSampler;
 
 in layout(location = 0) vec4 pos_in;
+in layout(location = 1) vec4 view_pos_in;
 
 out vec4 color;
-
-//vec3 diffuseColor = vec3(173.0, 255.0, 47.0) / 255.0;
-
 
 void main()
 {
     vec2 uv = (pos_in.xy + vec2(1.0, 1.0)) * 0.5;
-    vec3 normal = vec3(texture(normalDepthDiffuseSampler, uv).xy, 0);
+    float depth = texture(normalDepthDiffuseSampler, uv).z;
+    vec3 fragPosVS = vec3(view_pos_in.xy, 1.0) * depth;
     vec3 firefly = texture(firefly, uv).xyz;
-    normal.z = sqrt(1 - length(normal)*length(normal));
-
-    vec4 c_e = texture(colorEmSampler, uv);
-
+    vec3 albedo = texture(colorEmSampler, uv).xyz;
     vec3 diffuse = texture(diffuseSpecular, uv).xyz;
-    float ambient = texture(ambientSampler, uv).x;
 
-    color = vec4(c_e.xyz * (ambient + diffuse) + firefly, 1.0);
-    //color = vec4(ambient.xxx, 1.0);
-    //color = texture(ambientSampler, uv);
+    float l = length(fragPosVS) / 10.0;
+    float distanceFactor = 1.0 / (2.0 + 1.1 * l * l);
+
+    float ambient = texture(ambientSampler, uv).x * distanceFactor;
+
+    color = vec4(albedo * (ambient + diffuse) + firefly, 1.0);
 }

@@ -35,7 +35,6 @@ SSAO* ssao;
 // Objects
 SceneNode* rootNode;
 SceneNode* groundNode;
-SceneNode* treeNode;
 unsigned int squareVAO;
 unsigned int squareIndexCount;
 
@@ -67,6 +66,23 @@ double gameElapsedTime = debug_startTime;
 double mouseSensitivity = 1.0;
 double lastMouseX = windowWidth / 2;
 double lastMouseY = windowHeight / 2;
+
+namespace
+{
+    void addTree(SceneNode* parent, const glm::vec3& pos, unsigned int treeVAO, unsigned int treeTextureID, unsigned int treeIndices)
+    {
+        SceneNode* treeNode;
+
+        treeNode = createSceneNode();
+        parent->children.push_back(treeNode);
+        treeNode->vertexArrayObjectID = treeVAO;
+        treeNode->VAOIndexCount = treeIndices;
+        treeNode->textureID = treeTextureID;
+        treeNode->position = pos;
+        treeNode->scale = glm::vec3(1, 1, 1);
+    }
+}
+
 void mouseCallback(GLFWwindow* window, double x, double y) {
     int windowWidth, windowHeight;
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
@@ -87,7 +103,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     glfwSetCursorPosCallback(window, mouseCallback);
 
     // Create camera
-    camera = new Camera(glm::vec3(0.0f,2.0f,0.7f), windowWidth, windowHeight);
+    camera = new Camera(glm::vec3(0.0f,3.0f,12.0f), windowWidth, windowHeight);
 
     // Create shaders
     objectShader = new Gloom::Shader();
@@ -114,20 +130,29 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     // Construct scene
     rootNode = createSceneNode();
     groundNode  = createSceneNode();
-    treeNode = createSceneNode();
 
     rootNode->children.push_back(groundNode);
-    rootNode->children.push_back(treeNode);
 
     groundNode->vertexArrayObjectID = groundVAO;
     groundNode->VAOIndexCount = ground.indices.size();
     groundNode->textureID = groundTextureID;
 
-    treeNode->vertexArrayObjectID = treeVAO;
-    treeNode->VAOIndexCount = tree.indices.size();
-    treeNode->textureID = treeTextureID;
 
-    fireflies = new Fireflies(rootNode, windowWidth, windowHeight, 30, RESOURCE_PATH);
+    // Add trees
+    addTree(rootNode, { 0,0,0 }, treeVAO, treeTextureID, tree.indices.size());
+    for (int x = -20; x < 20; x += 4)
+    for (int z = -20; z < 20; z += 4)
+    {
+        if (abs(x) + abs(z) > 8)
+        {
+
+            glm::vec3 pos = { (float)x, 0.0, (float)z };
+            pos += glm::vec3((float)rand() / RAND_MAX - 0.5f, 0.0f, (float)rand() / RAND_MAX - 0.5f) * 4.0f;
+            addTree(rootNode, pos, treeVAO, treeTextureID, tree.indices.size());
+        }
+    }
+
+    fireflies = new Fireflies(rootNode, windowWidth, windowHeight, 300, RESOURCE_PATH);
 
     ssao = new SSAO(windowWidth, windowHeight, RESOURCE_PATH);
 
@@ -165,10 +190,7 @@ void updateFrame(GLFWwindow* window) {
     camera->Move(movement*0.1f, 0, 0);
     
     // Move and rotate various SceneNodes
-    groundNode->position = { 0, 0, 0 };
-
-    treeNode->position = { 0, 0.5f , 0 };
-    treeNode->scale = glm::vec3(1, 1, 1);
+    groundNode->position = { 0, -0.5, 0 };
 
     fireflies->Update(totalElapsedTime);
 
@@ -228,7 +250,7 @@ void renderFrame(GLFWwindow* window) {
 
     glBindFramebuffer(GL_FRAMEBUFFER, g_buffer.targetID);
     //glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
-    glClearColor(0.7f, 1.0f, 1.0f, 1.0f);
+    glClearColor(0.7f, 1.0f, -100.0f, 1.0f);
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     objectShader->activate();
@@ -256,6 +278,7 @@ void renderFrame(GLFWwindow* window) {
     glBindTextureUnit(2, fireflies->GetFireflyTexture());
     glBindTextureUnit(3, fireflies->GetLightTexture());
     glBindTextureUnit(4, ssao->GetTexture());
+    glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(camera->InvProjection()));
     postShader->activate();
     glBindVertexArray(squareVAO);
     glDrawElements(GL_TRIANGLES, squareIndexCount, GL_UNSIGNED_INT, nullptr);
@@ -271,7 +294,6 @@ void renderFrame(GLFWwindow* window) {
 void exitGame()
 {
     delete camera;
-    delete treeNode;
     delete groundNode;
     delete rootNode;
 }
