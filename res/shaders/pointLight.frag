@@ -18,7 +18,7 @@ float lb = 0.7;
 float lc = 1.8;
 float L(float d)
 {
-    return maxIntensity / (la + lb * d + lc * d * d);
+    return clamp(maxIntensity / (la + lb * d + lc * d * d) - 3.0 / 255.0, 0.0, maxIntensity);
 }
 
 vec3 lightColor1 = vec3(173.0, 255.0, 47.0) / 255.0;

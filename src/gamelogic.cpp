@@ -31,6 +31,7 @@
 Camera* camera;
 Fireflies* fireflies;
 SSAO* ssao;
+int renderMode = 0; // 0-Normal, 1-NoSSAO, 2-SSAONoise, 3-SSAOBlur
 
 // Objects
 SceneNode* rootNode;
@@ -102,6 +103,9 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     glfwSetCursorPosCallback(window, mouseCallback);
 
+    std::cout << "Use WASD, Left-shift, Enter and mouse to move camera." << std::endl;
+    std::cout << "Press 1, 2, 3 or 4 to change SSAO rendering mode." << std::endl;
+
     // Create camera
     camera = new Camera(glm::vec3(0.0f,3.0f,12.0f), windowWidth, windowHeight);
 
@@ -168,23 +172,23 @@ void updateFrame(GLFWwindow* window) {
     totalElapsedTime += timeDelta;
 
     glm::vec3 movement = glm::vec3();
-    if (glfwGetKey(window, GLFW_KEY_A)) {
-        movement += glm::vec3(-1.0f, 0.0f, 0.0f);
-    } 
-    else if(glfwGetKey(window, GLFW_KEY_D)) {
-        movement += glm::vec3(1.0f, 0.0f, 0.0f);
+    if (glfwGetKey(window, GLFW_KEY_A))             movement += glm::vec3(-1.0f, 0.0f, 0.0f);
+    if (glfwGetKey(window, GLFW_KEY_D))             movement += glm::vec3(1.0f, 0.0f, 0.0f);
+    if (glfwGetKey(window, GLFW_KEY_W))             movement += glm::vec3(0.0f, 0.0f, -1.0f);
+    if (glfwGetKey(window, GLFW_KEY_S))             movement += glm::vec3(0.0f, 0.0f, 1.0f);
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))    movement += glm::vec3(0.0f, -1.0f, 0.0f);
+    if (glfwGetKey(window, GLFW_KEY_SPACE))         movement += glm::vec3(0.0f, 1.0f, 0.0f);
+    if (glfwGetKey(window, GLFW_KEY_1)) {
+        renderMode = 0;
     }
-    else if (glfwGetKey(window, GLFW_KEY_W)) {
-        movement += glm::vec3(0.0f, 0.0f, -1.0f);
+    else if (glfwGetKey(window, GLFW_KEY_2)) {
+        renderMode = 1;
     }
-    else if (glfwGetKey(window, GLFW_KEY_S)) {
-        movement += glm::vec3(0.0f, 0.0f, 1.0f);
+    else if (glfwGetKey(window, GLFW_KEY_3)) {
+        renderMode = 2;
     }
-    else if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)) {
-        movement += glm::vec3(0.0f, -1.0f, 0.0f);
-    }
-    else if (glfwGetKey(window, GLFW_KEY_SPACE)) {
-        movement += glm::vec3(0.0f, 1.0f, 0.0f);
+    else if (glfwGetKey(window, GLFW_KEY_4)) {
+        renderMode = 3;
     }
     
     camera->Move(movement*0.1f, 0, 0);
@@ -259,36 +263,41 @@ void renderFrame(GLFWwindow* window) {
     ssao->Render(
         g_buffer.textureIDs[1], 
         camera->Projection(), 
-        camera->InvProjection()
+        camera->InvProjection(),
+        renderMode
     );
 
-    fireflies->RenderLights(
-        g_buffer.textureIDs[1],
-        g_buffer.depthID,
-        camera->View(),
-        camera->Projection()
-    );
+    if (renderMode <= 1)
+    {
+        fireflies->RenderLights(
+            g_buffer.textureIDs[1],
+            g_buffer.depthID,
+            camera->View(),
+            camera->Projection()
+        );
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glDisable(GL_DEPTH_TEST);
-    glBindTextureUnit(0, g_buffer.textureIDs[0]);
-    glBindTextureUnit(1, g_buffer.textureIDs[1]);
-    glBindTextureUnit(2, fireflies->GetFireflyTexture());
-    glBindTextureUnit(3, fireflies->GetLightTexture());
-    glBindTextureUnit(4, ssao->GetTexture());
-    glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(camera->InvProjection()));
-    postShader->activate();
-    glBindVertexArray(squareVAO);
-    glDrawElements(GL_TRIANGLES, squareIndexCount, GL_UNSIGNED_INT, nullptr);
-    glEnable(GL_DEPTH_TEST);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glDisable(GL_DEPTH_TEST);
+        glBindTextureUnit(0, g_buffer.textureIDs[0]);
+        glBindTextureUnit(1, g_buffer.textureIDs[1]);
+        glBindTextureUnit(2, fireflies->GetFireflyTexture());
+        glBindTextureUnit(3, fireflies->GetLightTexture());
+        glBindTextureUnit(4, ssao->GetTexture());
+        glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(camera->InvProjection()));
+        postShader->activate();
+        glBindVertexArray(squareVAO);
+        glDrawElements(GL_TRIANGLES, squareIndexCount, GL_UNSIGNED_INT, nullptr);
+        glEnable(GL_DEPTH_TEST);
 
-    fireflies->RenderFlies(
-        g_buffer.depthID,
-        camera->View(),
-        camera->Projection()
-    );
+        fireflies->RenderFlies(
+            g_buffer.depthID,
+            camera->View(),
+            camera->Projection()
+        );
+    }
+    
 }
 
 void exitGame()

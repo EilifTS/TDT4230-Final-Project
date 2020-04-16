@@ -53,5 +53,5 @@ void main()
         occlusion += a;
     }
 
-    color = vec4( 1.0 - occlusion / NUM_SAMPLES, 0.0, 0.0, 0.0);
+    color = vec4( (1.0 - occlusion / NUM_SAMPLES).xxx, 0.0);
 }

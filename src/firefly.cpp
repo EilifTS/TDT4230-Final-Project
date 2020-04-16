@@ -8,7 +8,7 @@
 
 namespace
 {
-	const float cutoff = 3.0f / 256.0f;
+	const float cutoff = 3.0f / 255.0f;
 	const float la = 1.0f;
 	const float lb = 0.7f;
 	const float lc = 1.8f;
@@ -57,11 +57,8 @@ void Fireflies::Update(double time)
 		//distPhase *= distPhase;
 		float dist = 0.4f + 20.0f * distPhase;
 
-		float way = f.phase * 2.0f - 1.0f;
-		way = way < 0 ? -1 : 1;
-		way = 1;
 		float heightPhase = fmodf(time * 0.0231f + f.phase, 1.0f);
-		float anglePhase = fmodf(f.phase * 577.3111f + way*time*0.0724 / dist, 1.0f);
+		float anglePhase = fmodf(f.phase * 577.3111f + time*0.0724 / dist, 1.0f);
 		float height = 0.5f + 3.4f * 0.5f* (1.0f + sinf(2*3.141592f * heightPhase)) / (1.0f+distPhase);
 		float angle = 2.0f * 3.141592f * anglePhase;
 		f.pos = glm::vec3(cosf(angle), 0, sinf(angle)) * dist;

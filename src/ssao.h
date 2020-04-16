@@ -5,14 +5,14 @@
 #include "utilities/shader.hpp"
 
 #define SSAO_NUM_SAMPLES 16
-#define SSAO_RANDOM_SIZE 4
+#define SSAO_RANDOM_SIZE 5
 
 class SSAO
 {
 public:
 	SSAO(int windowWidth, int windowHeight, const std::string& res_path);
 
-	void Render(unsigned int normalDepthID, const glm::mat4& projection, const glm::mat4& invProjection);
+	void Render(unsigned int normalDepthID, const glm::mat4& projection, const glm::mat4& invProjection, int renderMode);
 
 	unsigned int GetTexture() { return target.textureIDs[0]; };
 

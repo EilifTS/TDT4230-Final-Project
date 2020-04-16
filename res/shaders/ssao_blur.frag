@@ -51,5 +51,5 @@ void main()
 	}
 
 
-    color = vec4( result / acc, 0.0, 0.0, 0.0);
+    color = vec4( (result / acc).xxx, 0.0);
 }

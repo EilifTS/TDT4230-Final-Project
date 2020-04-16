@@ -61,51 +61,61 @@ SSAO::SSAO(int windowWidth, int windowHeight, const std::string& res_path)
 	pixelSize = glm::vec2(1.0f / (float)windowWidth, 1.0f / (float)windowHeight);
 }
 
-void SSAO::Render(unsigned int normalDepthID, const glm::mat4& projection, const glm::mat4& invProjection)
+void SSAO::Render(unsigned int normalDepthID, const glm::mat4& projection, const glm::mat4& invProjection, int renderMode)
 {
 	glDisable(GL_DEPTH_TEST);
 
-	// Common bindings
-	
-
 	// SSAO Pass
-	glBindFramebuffer(GL_FRAMEBUFFER, target.targetID);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	if(renderMode != 2) // 2 --> Render noisy SSAO directly to BB
+		glBindFramebuffer(GL_FRAMEBUFFER, target.targetID);
+	else
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	ssaoShader.activate();
-	glBindVertexArray(squareVAO);
+	if (renderMode != 1) // 1 --> SSAO is only a white texture
+	{
+		ssaoShader.activate();
+		glBindVertexArray(squareVAO);
 
-	glBindTextureUnit(0, normalDepthID);
-	glBindTextureUnit(1, randomTextureID);
-	glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(projection));
-	glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(invProjection));
-	glUniform2fv(2, 1, glm::value_ptr(randomScale));
-	glUniform1f(3, radius);
-	glUniform3fv(4, SSAO_NUM_SAMPLES, glm::value_ptr(samplePoints[0]));
-	glDrawElements(GL_TRIANGLES, squareIndexCount, GL_UNSIGNED_INT, nullptr);
-	
-	//Common blur bindings
-	blurShader.activate();
-	glUniform1i(0, SSAO_RANDOM_SIZE);
-	glUniform2fv(1, 1, glm::value_ptr(pixelSize));
+		glBindTextureUnit(0, normalDepthID);
+		glBindTextureUnit(1, randomTextureID);
+		glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(invProjection));
+		glUniform2fv(2, 1, glm::value_ptr(randomScale));
+		glUniform1f(3, radius);
+		glUniform3fv(4, SSAO_NUM_SAMPLES, glm::value_ptr(samplePoints[0]));
+		glDrawElements(GL_TRIANGLES, squareIndexCount, GL_UNSIGNED_INT, nullptr);
 
-	// Horisontal blur pass
-	glBindFramebuffer(GL_FRAMEBUFFER, middleTarget.targetID);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glBindTextureUnit(1, target.textureIDs[0]);
-	glUniform2f(2, 1.0f, 0.0f);
-	glDrawElements(GL_TRIANGLES, squareIndexCount, GL_UNSIGNED_INT, nullptr);
+		if (renderMode != 2) // 2 --> No blur
+		{
+			//Common blur bindings
+			blurShader.activate();
+			glUniform1i(0, SSAO_RANDOM_SIZE);
+			glUniform2fv(1, 1, glm::value_ptr(pixelSize));
 
-	// Vertical blur pass
-	glBindFramebuffer(GL_FRAMEBUFFER, target.targetID);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glBindTextureUnit(1, middleTarget.textureIDs[0]);
-	glUniform2f(2, 0.0f, 1.0f);
-	glDrawElements(GL_TRIANGLES, squareIndexCount, GL_UNSIGNED_INT, nullptr);
-	
+			// Horisontal blur pass
+			glBindFramebuffer(GL_FRAMEBUFFER, middleTarget.targetID);
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT);
+			glBindTextureUnit(1, target.textureIDs[0]);
+			glUniform2f(2, 1.0f, 0.0f);
+			glDrawElements(GL_TRIANGLES, squareIndexCount, GL_UNSIGNED_INT, nullptr);
+
+			// Vertical blur pass
+			if (renderMode == 3)
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			else
+				glBindFramebuffer(GL_FRAMEBUFFER, target.targetID);
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT);
+			glBindTextureUnit(1, middleTarget.textureIDs[0]);
+			glUniform2f(2, 0.0f, 1.0f);
+			glDrawElements(GL_TRIANGLES, squareIndexCount, GL_UNSIGNED_INT, nullptr);
+		}
+	}
+
 	glEnable(GL_DEPTH_TEST);
 }
 
